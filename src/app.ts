@@ -2,11 +2,10 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
-import swaggerUi from 'swagger-ui-express';
 import { rateLimitMiddleware } from './middleware/rateLimiter';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { monitoringMiddleware } from './middleware/monitoringMiddleware';
-import { swaggerSpec } from './config/swagger';
+import { setupSwagger } from './config/swagger';
 import userRoutes from './routes/userRoutes';
 import cacheRoutes from './routes/cacheRoutes';
 import metricsRoutes from './routes/metricsRoutes';
@@ -37,21 +36,13 @@ const createApp = (): Application => {
     next();
   });
 
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-    customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: 'User Data API Documentation',
-  }));
+  setupSwagger(app);
 
   app.use((req, res, next) => {
     if (req.path.startsWith('/api-docs')) {
       return next();
     }
     rateLimitMiddleware(req, res, next);
-  });
-
-  app.get('/api-docs.json', (_req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.send(swaggerSpec);
   });
 
   app.get('/health', (_req, res) => {
