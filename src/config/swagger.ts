@@ -1,4 +1,6 @@
 import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
+import { Application } from 'express';
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -253,7 +255,25 @@ const options: swaggerJsdoc.Options = {
       },
     },
   },
-  apis: ['./src/routes/*.ts', './src/controllers/*.ts'],
+  apis: ['./src/config/swagger.paths.ts'],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
+
+/**
+ * Setup Swagger UI documentation
+ * @param app - Express application instance
+ */
+export const setupSwagger = (app: Application): void => {
+  // Swagger UI
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'User Data API Documentation',
+  }));
+
+  // Swagger JSON endpoint
+  app.get('/api-docs.json', (_req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
+  });
+};
